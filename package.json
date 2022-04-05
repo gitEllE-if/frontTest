@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build"
+    "build": "vue-cli-service build && (cd server && npm install)",
+    "postinstall": "if test \"$NODE_ENV\" = \"production\" ; then npm run build ; fi ",
+    "start": "cd server && npm start"
   },
   "dependencies": {
     "axios": "^0.26.0",

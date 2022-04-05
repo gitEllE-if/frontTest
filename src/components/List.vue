@@ -1,88 +1,126 @@
 <template>
-  <div class="product-list">
-    <div class="card" v-for="product in products" :style="{width: cardsWidth + '%'}">
-      <p class="card-title">{{ product.title }}</p>
-      <img class="card-image" :src="product.image" alt="">
+  <main class="product-list">
+    <div class="card" v-for="product in products" :key="product.id">
+      <p class="g__subtitle card-title">{{ product.title }}</p>
+      <img class="card-image" :src="product.image" alt="" />
       <p class="card-price">Цена: {{ product.price }} {{ currency }}</p>
 
-      <div>
-        <input type="number" ref="amount" :id="product.id">
-        <span>кг</span>
+      <div class="card-amount">
+        <input
+          class="card-input"
+          placeholder="0"
+          type="number"
+          v-model.number="amounts[product.id]"
+          min="1"
+          max="1000"
+          step="1"
+        />
+        <span> {{ measure }}</span>
       </div>
 
-      <button @click="addToCart(product)"> В корзину </button>
+      <button
+        class="g__button card-button"
+        @click="addToCart(product, amounts[product.id])"
+      >
+        в корзину
+      </button>
     </div>
-  </div>
+  </main>
 </template>
 
 <script>
+import { mapState } from "vuex";
 export default {
-  props: {
-    currency: String,
-  },
+  name: "List",
   data() {
     return {
-      products: [],
+      amounts: {},
+      timerId: null,
+      isErrorInput: false,
     };
   },
+
   computed: {
-    cardsWidth() {
-      let width = window.innerWidth;
-      let count = 1;
-      if (width > '840px') {
-        count = 3;
-      } else if ((width > '420px' && width < '840px')) {
-        count = 2;
-      }
-
-      return 100 / count;
-    },
+    ...mapState({
+      products: (state) => state.products,
+      cart: (state) => state.cart,
+      currency: (state) => state.currency,
+      measure: (state) => state.measure,
+    }),
   },
+
   methods: {
-    startPricesMonitoring() {
-      setInterval(this.getList, 1000);
+    fetchProductsList() {
+      this.$store.dispatch("getProductsList");
     },
-    async getList() {
-      let data = await this.$store.dispatch('getProductsList');
-
-      this.products = data;
-    },
-    addToCart(product) {
-      let amount = this.$refs.amount.find((input) => input.id === product.id).value;
-
-      let data = {
-        amount,
-        price: product.price,
-        title: product.title,
-      };
-      this.$parent.cart.push(data);
+    addToCart(product, amount) {
+      if (!amount || amount < 0 || !Number.isInteger(amount)) {
+        return;
+      }
+      this.cart.findIndex((item) => item.id === product.id) === -1
+        ? this.$store.dispatch("addToCart", { ...product, amount })
+        : this.$store.dispatch("updateCart", {
+            id: product.id,
+            amount,
+          });
     },
   },
   created() {
-    this.startPricesMonitoring();
+    this.fetchProductsList();
+    this.$store.dispatch("getCartList");
+  },
+  mounted() {
+    this.timerId = setInterval(this.fetchProductsList, 2000);
+  },
+  beforeDestroy() {
+    clearInterval(this.timerId);
   },
 };
 </script>
 
-<style>
-  .product-list {
-    padding: 10px;
-  }
+<style scoped>
+.product-list {
+  padding: 10px;
+}
 
+.card {
+  display: inline-block;
+  width: calc(100% / 3 - 10px);
+  border: 1px solid #908888;
+  border-radius: 5px;
+  text-align: center;
+  padding: 10px;
+  margin: 5px;
+}
+.card-image {
+  width: 100%;
+}
+.card-button {
+  width: 120px;
+  padding: 5px 10px;
+  margin: 5px;
+}
+.card-input {
+  outline: none;
+  border: 1px solid #908888;
+  border-radius: 5px;
+  padding: 2px;
+  text-align: center;
+  width: 100px;
+}
+.card-input:invalid:not(:placeholder-shown) {
+  border: 1px solid red;
+}
+
+@media (max-width: 840px) {
   .card {
-    display: inline-block;
-    width: 100%;
-    border: 1px solid #908888;
-    border-radius: 5px;
-    text-align: center;
-    padding: 10px;
+    width: calc(100% / 2 - 10px);
   }
-  .card-image {
-    width: 100%;
-  }
-  button {
-    padding: 5px;
-    margin: 5px;
-  }
+}
 
+@media (max-width: 420px) {
+  .card {
+    width: 100%;
+  }
+}
 </style>
