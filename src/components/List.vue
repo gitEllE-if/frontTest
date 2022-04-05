@@ -1,7 +1,7 @@
 <template>
   <main class="product-list">
-    <div class="card" v-for="product in products" :key="product.id">
-      <p class="g__subtitle card-title">{{ product.title }}</p>
+    <article class="card" v-for="product in products" :key="product.id">
+      <h1 class="g__subtitle card-title">{{ product.title }}</h1>
       <img class="card-image" :src="product.image" alt="" />
       <p class="card-price">Цена: {{ product.price }} {{ currency }}</p>
 
@@ -24,7 +24,7 @@
       >
         в корзину
       </button>
-    </div>
+    </article>
   </main>
 </template>
 
